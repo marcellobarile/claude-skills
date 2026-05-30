@@ -1,6 +1,6 @@
 # claude-skills
 
-A catalog of [Claude Code](https://docs.claude.com/en/docs/claude-code) skills, with an
+A collection of skills that I ideated for [Claude Code](https://docs.claude.com/en/docs/claude-code), with an
 interactive installer that lets you pick **only the skills you want** and copies them into
 your personal skills directory (`~/.claude/skills/`).
 
