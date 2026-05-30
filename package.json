@@ -1,0 +1,19 @@
+{
+  "name": "claude-skills",
+  "version": "0.1.0",
+  "description": "Catalog of Claude Code skills with an interactive installer.",
+  "type": "module",
+  "bin": {
+    "claude-skills-install": "bin/install.mjs"
+  },
+  "scripts": {
+    "start": "node bin/install.mjs",
+    "docs": "node scripts/gen-readme.mjs",
+    "test": "node --test"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "gray-matter": "^4.0.3"
+  }
+}
