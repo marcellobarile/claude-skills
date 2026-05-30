@@ -4,10 +4,12 @@
   "description": "Catalog of Claude Code skills with an interactive installer.",
   "type": "module",
   "bin": {
-    "claude-skills-install": "bin/install.mjs"
+    "claude-skills-install": "bin/install.mjs",
+    "claude-skills-uninstall": "bin/uninstall.mjs"
   },
   "scripts": {
     "start": "node bin/install.mjs",
+    "uninstall": "node bin/uninstall.mjs",
     "docs": "node scripts/gen-readme.mjs",
     "test": "node --test"
   },

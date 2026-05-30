@@ -12,8 +12,10 @@ import {
   log,
 } from "@clack/prompts";
 import { discoverSkills, copySkill } from "../lib/skills.mjs";
+import { loadSetup } from "../lib/setup.mjs";
 
 const TARGET_DIR = join(homedir(), ".claude", "skills");
+const CLAUDE_DIR = join(homedir(), ".claude");
 
 function bail() {
   cancel("Installazione annullata.");
@@ -68,6 +70,23 @@ async function main() {
     copySkill(skill.dir, dest);
     log.success(`Installata: ${skill.name}`);
     installed++;
+
+    const setup = await loadSetup(dest);
+    if (setup) {
+      const runIt = await confirm({
+        message: `Run setup for "${skill.name}"? (wires commands/hooks)`,
+        initialValue: true,
+      });
+      if (isCancel(runIt)) bail();
+      if (runIt) {
+        try {
+          await setup({ skillDir: dest, claudeDir: CLAUDE_DIR, log });
+          log.success(`Wired: ${skill.name}`);
+        } catch (err) {
+          log.error(`Setup failed for ${skill.name}: ${err.message}`);
+        }
+      }
+    }
   }
 
   outro(`Fatto — ${installed} installate, ${skipped} saltate. Target: ${TARGET_DIR}`);
