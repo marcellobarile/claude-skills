@@ -4,6 +4,7 @@
   "description": "Catalog of Claude Code skills with an interactive installer.",
   "type": "module",
   "bin": {
+    "claude-skills": "bin/install.mjs",
     "claude-skills-install": "bin/install.mjs",
     "claude-skills-uninstall": "bin/uninstall.mjs"
   },
