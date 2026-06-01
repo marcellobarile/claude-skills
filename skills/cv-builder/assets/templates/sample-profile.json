@@ -1,0 +1,15 @@
+{
+  "identity":   { "fullName": "Jane Q. Engineer", "headline": "Senior Backend Engineer · Distributed Systems", "location": "Milan, Italy", "languageOfCv": "en" },
+  "contacts":   { "email": "jane@example.com", "phone": "+39 333 0000000", "website": "https://jane.dev", "github": "https://github.com/janeq", "linkedin": "https://linkedin.com/in/janeq", "medium": "https://medium.com/@janeq", "other": [] },
+  "summary":    "Backend engineer with 9 years building high-throughput services. Cut p99 latency 40% across a payments platform serving 12M users.",
+  "experience": [
+    { "role": "Senior Backend Engineer", "company": "Acme Payments", "start": "2021", "end": "Present", "location": "Remote", "bullets": ["Led migration to event-driven architecture, cutting p99 latency 40%.", "Mentored 4 engineers; introduced trunk-based delivery."], "stack": ["Go", "Kafka", "PostgreSQL"] },
+    { "role": "Backend Engineer", "company": "DataForge", "start": "2017", "end": "2021", "location": "Milan", "bullets": ["Built ingestion pipeline processing 2B events/day."], "stack": ["Java", "Spark"] }
+  ],
+  "skills":     { "groups": [ { "label": "Languages", "items": ["Go", "Java", "Python"] }, { "label": "Infra", "items": ["Kubernetes", "Kafka", "Terraform"] } ] },
+  "education":  [ { "degree": "M.Sc. Computer Science", "institution": "Politecnico di Milano", "start": "2012", "end": "2016", "notes": "110/110 cum laude" } ],
+  "projects":   [ { "name": "openqueue", "url": "https://github.com/janeq/openqueue", "description": "Lightweight durable job queue.", "stack": ["Go"] } ],
+  "webPresence":[ { "kind": "github", "url": "https://github.com/janeq", "metric": "1.2k stars", "note": "12 public repos" }, { "kind": "medium", "url": "https://medium.com/@janeq", "metric": "8 articles", "note": "distributed systems" } ],
+  "certifications": ["CKA — Certified Kubernetes Administrator (2023)"],
+  "lastUpdated": "2026-06-01"
+}

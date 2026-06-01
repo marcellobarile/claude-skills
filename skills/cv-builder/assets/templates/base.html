@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{FULL_NAME}} — CV</title>
+  <!-- DEV-PREVIEW-LINK: removed at render, theme inlined below -->
+  <link rel="stylesheet" href="classic.css">
+  <style id="theme">/* render phase inlines chosen theme CSS here */</style>
+</head>
+<body>
+  <button class="no-print" id="printBtn" onclick="window.print()">Save as PDF</button>
+
+  <main class="cv">
+    <header class="cv__header">
+      <h1 class="cv__name">{{FULL_NAME}}</h1>
+      <p class="cv__headline">{{HEADLINE}}</p>
+      <ul class="cv__contacts">
+        <!-- BEGIN contact --><li><a href="{{CONTACT_URL}}">{{CONTACT_LABEL}}</a></li><!-- END contact -->
+      </ul>
+    </header>
+
+    <section class="cv__section cv__summary">
+      <h2>Summary</h2>
+      <p>{{SUMMARY}}</p>
+    </section>
+
+    <section class="cv__section cv__experience">
+      <h2>Experience</h2>
+      <!-- BEGIN experience -->
+      <article class="entry">
+        <div class="entry__head">
+          <span class="entry__role">{{ROLE}}</span>
+          <span class="entry__company">{{COMPANY}}</span>
+          <span class="entry__meta">{{START}}–{{END}} · {{LOCATION}}</span>
+        </div>
+        <ul class="entry__bullets">
+          <!-- BEGIN bullet --><li>{{BULLET}}</li><!-- END bullet -->
+        </ul>
+        <p class="entry__stack">{{STACK}}</p>
+      </article>
+      <!-- END experience -->
+    </section>
+
+    <section class="cv__section cv__skills">
+      <h2>Skills</h2>
+      <!-- BEGIN skillgroup -->
+      <div class="skillgroup"><span class="skillgroup__label">{{SKILL_LABEL}}</span><span class="skillgroup__items">{{SKILL_ITEMS}}</span></div>
+      <!-- END skillgroup -->
+    </section>
+
+    <section class="cv__section cv__projects">
+      <h2>Projects</h2>
+      <!-- BEGIN project -->
+      <article class="entry">
+        <div class="entry__head"><a class="entry__role" href="{{PROJECT_URL}}">{{PROJECT_NAME}}</a><span class="entry__meta">{{PROJECT_STACK}}</span></div>
+        <p>{{PROJECT_DESC}}</p>
+      </article>
+      <!-- END project -->
+    </section>
+
+    <section class="cv__section cv__education">
+      <h2>Education</h2>
+      <!-- BEGIN education -->
+      <article class="entry">
+        <div class="entry__head"><span class="entry__role">{{DEGREE}}</span><span class="entry__company">{{INSTITUTION}}</span><span class="entry__meta">{{EDU_START}}–{{EDU_END}}</span></div>
+        <p class="entry__notes">{{EDU_NOTES}}</p>
+      </article>
+      <!-- END education -->
+    </section>
+
+    <section class="cv__section cv__web">
+      <h2>Web Presence</h2>
+      <ul class="weblist">
+        <!-- BEGIN web --><li><a href="{{WEB_URL}}">{{WEB_KIND}}</a> — {{WEB_METRIC}} · {{WEB_NOTE}}</li><!-- END web -->
+      </ul>
+    </section>
+
+    <section class="cv__section cv__certs">
+      <h2>Certifications</h2>
+      <ul>
+        <!-- BEGIN cert --><li>{{CERT}}</li><!-- END cert -->
+      </ul>
+    </section>
+
+    <footer class="cv__footer">
+      <p class="cv__tagline">{{AI_TAGLINE}}</p>
+      <p class="cv__disclaimer">{{AI_DISCLAIMER}}</p>
+    </footer>
+  </main>
+</body>
+</html>
