@@ -1,0 +1,33 @@
+:root { --ink:#1a1a1a; --muted:#555; --rule:#ddd; --accent:#1a1a1a; }
+* { box-sizing: border-box; }
+body { margin:0; color:var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height:1.45; background:#f4f4f4; }
+.cv { max-width: 800px; margin: 24px auto; background:#fff; padding: 32px 40px; }
+.cv__name { font-size: 28px; margin:0; }
+.cv__headline { color:var(--muted); margin:4px 0 12px; font-size:15px; }
+.cv__contacts { list-style:none; padding:0; margin:0; display:flex; flex-wrap:wrap; gap:6px 16px; font-size:13px; }
+.cv__contacts a { color:var(--accent); text-decoration:none; }
+.cv__section { margin-top: 22px; }
+.cv__section > h2 { font-size: 13px; text-transform: uppercase; letter-spacing:.08em; color:var(--muted); border-bottom:1px solid var(--rule); padding-bottom:4px; margin:0 0 10px; }
+.entry { margin-bottom: 14px; break-inside: avoid; }
+.entry__head { display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline; }
+.entry__role { font-weight:600; }
+.entry__company { color:var(--muted); }
+.entry__meta { margin-left:auto; color:var(--muted); font-size:12px; }
+.entry__bullets { margin:6px 0 0; padding-left:18px; }
+.entry__bullets li { margin:2px 0; }
+.entry__stack, .entry__notes { color:var(--muted); font-size:12.5px; margin:4px 0 0; }
+.skillgroup { display:flex; gap:10px; margin:4px 0; font-size:13.5px; }
+.skillgroup__label { font-weight:600; min-width:90px; }
+.weblist { margin:0; padding-left:18px; font-size:13.5px; }
+.cv__footer { margin-top:28px; padding-top:10px; border-top:1px solid var(--rule); }
+.cv__tagline { font-size:12.5px; font-style:italic; color:var(--muted); margin:0; }
+.cv__disclaimer { font-size:11px; color:#999; margin:4px 0 0; }
+.no-print { position:fixed; top:16px; right:16px; padding:8px 14px; border:0; border-radius:6px; background:var(--accent); color:#fff; cursor:pointer; font-size:13px; }
+@page { size: A4; margin: 14mm; }
+@media print {
+  body { background:#fff; }
+  .cv { margin:0; max-width:none; padding:0; }
+  .no-print { display:none !important; }
+  a { color: var(--ink); }
+  .entry, section { break-inside: avoid; }
+}
