@@ -23,7 +23,11 @@ Decide where a memory belongs and wire repo-scoped memory so Claude finds it and
 In repos where you must not commit Claude artifacts, keep memories in
 `~/.claude/projects/<slug>/memory/` only (not git-tracked).
 
-## Setup
+## Setup (symlink wiring)
 
-`/memory-setup` (or `scripts/setup-project-memory.sh <repo> <slug>`) creates `<repo>/docs/memory/`,
-moves any existing memories out of `~/.claude/projects/<slug>/memory/`, and symlinks them back.
+```sh
+mkdir -p <repo>/docs/memory
+mv ~/.claude/projects/<slug>/memory/* <repo>/docs/memory/
+rmdir ~/.claude/projects/<slug>/memory
+ln -s <repo>/docs/memory ~/.claude/projects/<slug>/memory
+```
