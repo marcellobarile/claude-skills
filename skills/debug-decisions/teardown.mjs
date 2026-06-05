@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { homedir } from "node:os";
 import {
   rmSync, existsSync, readdirSync, readFileSync, writeFileSync, copyFileSync,
 } from "node:fs";
@@ -35,7 +36,19 @@ export default async function teardown({ skillDir, claudeDir, log }) {
     }
   }
 
-  // 3. Recorded decision data is preserved on purpose — never deleted here.
+  // 3. De-register .bin/* Bash permission from settings.json (idempotent).
+  if (existsSync(settingsPath)) {
+    const settings = JSON.parse(readFileSync(settingsPath, "utf8"));
+    const binPerm = `Bash(${skillDir.replace(homedir(), "~")}/.bin/*:*)`;
+    const allow = settings.permissions?.allow;
+    if (allow?.includes(binPerm)) {
+      settings.permissions.allow = allow.filter((p) => p !== binPerm);
+      writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + "\n");
+      log.info(`debug-decisions: permission removed — ${binPerm}`);
+    }
+  }
+
+  // 4. Recorded decision data is preserved on purpose — never deleted here.
   log.info(
     "debug-decisions: decision data left intact at ~/.claude/debug-decisions/ (remove manually if you want it gone)",
   );

@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { homedir } from "node:os";
 import {
   mkdirSync, copyFileSync, readFileSync, writeFileSync,
   existsSync, readdirSync,
@@ -43,5 +44,17 @@ export default async function setup({ skillDir, claudeDir, log }) {
   } else {
     log.info("debug-decisions: Stop hook already present");
   }
+  // 3. Register .bin/* Bash permission in settings.json (idempotent).
+  const binPerm = `Bash(${skillDir.replace(homedir(), "~")}/.bin/*:*)`;
+  settings.permissions ??= {};
+  settings.permissions.allow ??= [];
+  if (!settings.permissions.allow.includes(binPerm)) {
+    settings.permissions.allow.push(binPerm);
+    writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + "\n");
+    log.info(`debug-decisions: permission registered — ${binPerm}`);
+  } else {
+    log.info("debug-decisions: permission already present");
+  }
+
   log.info("debug-decisions: commands installed");
 }
