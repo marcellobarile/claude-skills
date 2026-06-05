@@ -36,15 +36,28 @@ export default async function teardown({ skillDir, claudeDir, log }) {
     }
   }
 
-  // 3. De-register .bin/* Bash permission from settings.json (idempotent).
+  // 3. De-register per-script Bash permissions from settings.json (idempotent).
   if (existsSync(settingsPath)) {
     const settings = JSON.parse(readFileSync(settingsPath, "utf8"));
-    const binPerm = `Bash(${skillDir.replace(homedir(), "~")}/.bin/*:*)`;
+    const binBase = skillDir.replace(homedir(), "~") + "/.bin";
+    const binPerms = new Set([
+      `Bash(${binBase}/slug.sh)`,
+      `Bash(${binBase}/git-sha.sh)`,
+      `Bash(${binBase}/ensure-project-dir.sh:*)`,
+      `Bash(${binBase}/decision-id.sh:*)`,
+      `Bash(${binBase}/index-append.sh:*)`,
+      `Bash(${binBase}/index-update-status.sh:*)`,
+      `Bash(${binBase}/setup-project-decisions.sh:*)`,
+      "Bash(git rev-parse:*)",
+    ]);
     const allow = settings.permissions?.allow;
-    if (allow?.includes(binPerm)) {
-      settings.permissions.allow = allow.filter((p) => p !== binPerm);
-      writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + "\n");
-      log.info(`debug-decisions: permission removed — ${binPerm}`);
+    if (allow) {
+      const pruned = allow.filter((p) => !binPerms.has(p));
+      if (pruned.length !== allow.length) {
+        settings.permissions.allow = pruned;
+        writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + "\n");
+        log.info("debug-decisions: permissions removed");
+      }
     }
   }
 

@@ -44,16 +44,28 @@ export default async function setup({ skillDir, claudeDir, log }) {
   } else {
     log.info("debug-decisions: Stop hook already present");
   }
-  // 3. Register .bin/* Bash permission in settings.json (idempotent).
-  const binPerm = `Bash(${skillDir.replace(homedir(), "~")}/.bin/*:*)`;
+  // 3. Register per-script Bash permissions in settings.json (idempotent).
+  // Wildcard in command path is not supported by the permission matcher — list explicitly.
+  const binBase = skillDir.replace(homedir(), "~") + "/.bin";
+  const binPerms = [
+    `Bash(${binBase}/slug.sh)`,
+    `Bash(${binBase}/git-sha.sh)`,
+    `Bash(${binBase}/ensure-project-dir.sh:*)`,
+    `Bash(${binBase}/decision-id.sh:*)`,
+    `Bash(${binBase}/index-append.sh:*)`,
+    `Bash(${binBase}/index-update-status.sh:*)`,
+    `Bash(${binBase}/setup-project-decisions.sh:*)`,
+    "Bash(git rev-parse:*)",
+  ];
   settings.permissions ??= {};
   settings.permissions.allow ??= [];
-  if (!settings.permissions.allow.includes(binPerm)) {
-    settings.permissions.allow.push(binPerm);
+  const missing = binPerms.filter((p) => !settings.permissions.allow.includes(p));
+  if (missing.length > 0) {
+    settings.permissions.allow.push(...missing);
     writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + "\n");
-    log.info(`debug-decisions: permission registered — ${binPerm}`);
+    log.info(`debug-decisions: permissions registered — ${missing.join(", ")}`);
   } else {
-    log.info("debug-decisions: permission already present");
+    log.info("debug-decisions: permissions already present");
   }
 
   log.info("debug-decisions: commands installed");

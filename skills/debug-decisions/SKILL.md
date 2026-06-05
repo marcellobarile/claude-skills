@@ -14,6 +14,7 @@ Track architectural / approach decisions per project, separate from git history.
 - `/decision-show <id>` — view one decision in full.
 - `/decision-revert <id>` — assisted revert with explicit confirmation at every step.
 - `/decision-supersede <old-id> <description>` — supersede an old decision with a new one.
+- `/decision-link` — wire `docs/decisions/` in the current git repo as the storage backend (symlink from `~/.claude/debug-decisions/<slug>/`), migrating any existing files. Run once per repo.
 
 ## Layout
 
@@ -21,6 +22,8 @@ Track architectural / approach decisions per project, separate from git history.
 - Decision **data** lives in `~/.claude/debug-decisions/<slug>/` — one dir per project
   (slug = cwd with `/` → `-`), with an `INDEX.md` and one file per decision. `_global/` holds
   cross-project decisions.
+- After running `/decision-link`, `~/.claude/debug-decisions/<slug>/` becomes a symlink to
+  `<repo>/docs/decisions/`, so decisions are versioned in git. `_global/` is never linked.
 
 ## What counts as a decision
 
