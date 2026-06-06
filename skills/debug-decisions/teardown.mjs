@@ -48,7 +48,6 @@ export default async function teardown({ skillDir, claudeDir, log }) {
       `Bash(${binBase}/index-append.sh:*)`,
       `Bash(${binBase}/index-update-status.sh:*)`,
       `Bash(${binBase}/setup-project-decisions.sh:*)`,
-      "Bash(git rev-parse:*)",
     ]);
     const allow = settings.permissions?.allow;
     if (allow) {

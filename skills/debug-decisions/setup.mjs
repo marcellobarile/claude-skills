@@ -55,7 +55,6 @@ export default async function setup({ skillDir, claudeDir, log }) {
     `Bash(${binBase}/index-append.sh:*)`,
     `Bash(${binBase}/index-update-status.sh:*)`,
     `Bash(${binBase}/setup-project-decisions.sh:*)`,
-    "Bash(git rev-parse:*)",
   ];
   settings.permissions ??= {};
   settings.permissions.allow ??= [];
