@@ -1,5 +1,5 @@
 ---
-allowed-tools: Bash(~/.claude/skills/debug-decisions/.bin/*:*), Bash(mkdir:*), Bash(cat:*), Read, Write, Edit
+allowed-tools: Bash(~/.claude/skills/debug-decisions/.bin/*:*), Bash(mkdir:*), Bash(cat:*), Bash(git:*), Bash(test:*), Bash(readlink:*), Read, Write, Edit
 description: Register an architectural decision for the current project (or --global)
 ---
 
@@ -31,6 +31,12 @@ The remaining free text is the **description input** for the decision.
 1. Determine target slug:
    - If `--global` → slug is literally `_global`.
    - Otherwise use the slug output above.
+
+1b. **Auto-link check** (skip when `--global`):
+   - Run: `test -L "$HOME/.claude/debug-decisions/<slug>" && echo linked || echo unlinked`
+   - If output is `unlinked`:
+     - Run `~/.claude/skills/debug-decisions/.bin/setup-project-decisions.sh "$(pwd)" "<slug>"` — this wires `docs/decisions/` under the current directory as the storage backend (idempotent, migrates any existing files). Works whether or not the directory is currently a git repo. Set a flag `auto_linked=true` to mention in the final output.
+
 2. Run `~/.claude/skills/debug-decisions/.bin/ensure-project-dir.sh <slug>` to ensure the project dir + INDEX exist.
 3. Generate the decision id: `~/.claude/skills/debug-decisions/.bin/decision-id.sh "<description input>"`.
 4. Compose the decision file content following `decision-template.md`. **Critical rule:** if you cannot deduce Context, Alternatives Considered, or Rationale from the conversation history, **stop and ask the user** before writing. Never invent.
@@ -42,9 +48,10 @@ The remaining free text is the **description input** for the decision.
 7. Output to user (brief):
    ```
    Decision registered: <id>
-   File: ~/.claude/debug-decisions/<slug>/<id>.md
+   File: ~/.claude/debug-decisions/<slug>/<id>.md   (→ <repo>/docs/decisions/ if auto_linked)
    View: /decision-show <short-id-suffix>
    ```
+   If `auto_linked=true`, add one line: `Auto-linked to repo: docs/decisions/ is now the storage backend.`
 
 **If id collides** (file already exists for same minute): append `-2`, `-3` to the minute portion. Never overwrite.
 
