@@ -1,0 +1,23 @@
+{
+  "skill_name": "personal-trainer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Hi, I want to start training seriously. I've been pretty inactive for the last couple of years. I'm 34, male, about 82kg and 178cm. I had a minor lower back issue last year (herniated L4-L5 disc) but a physio cleared me for exercise 6 months ago. I have a full gym membership — barbells, cables, everything. I can train 4 days a week, around 60-75 min per session. Main goal is hypertrophy, secondary is losing some fat. I like variety in exercises, gets boring doing the same thing every week.",
+      "expected_output": "Agent should run intake, capture the full profile including the L4-L5 history, confirm physio clearance, ask remaining intake questions (preferences, mental coaching style, etc.), then generate a 4-day hypertrophy plan with appropriate lower back modifications (avoiding heavy spinal loading initially), variety in accessory exercises, and save profile.json + a plan JSON. Plan should not include heavy conventional deadlifts initially.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Just finished my push day. Flat bench: 4x8 @ 75kg (last set was a grind, RPE 9). Incline DB press: 3x10 @ 28kg each, felt good, RPE 7. Cable fly: 3x15 @ 10kg. Tricep pushdown: 3x12 @ 25kg. Lateral raise: 4x15 @ 10kg. Overall energy was a bit low today, maybe 6/10. Session was about 65 minutes.",
+      "expected_output": "Agent should log this session, extract all exercise data (sets/reps/weight/RPE), calculate estimated 1RM for bench press, note the energy level, update progress.json, provide a brief coaching note about the RPE 9 on bench (possibly suggesting same weight next session or slight deload), and offer a mental coaching reflection. Session JSON should be saved with correct structure.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I'm training for a half-marathon in 14 weeks. I'm an intermediate runner (I've done a few 10Ks) but I've never done more than 15km in one go. I'm 29F, 62kg, no injuries. I have no gym access at all, just my neighborhood streets and a pair of running shoes. I also want to add some strength training to prevent injury. I can dedicate 6 days to training but 2 of them would be short (30-40 min). Show me a weekly structure and then export it as CSV when done.",
+      "expected_output": "Agent should run intake (or minimal intake for missing pieces), design a 14-week half-marathon prep plan with a mix of Zone 2 runs, tempo runs, long runs, and bodyweight strength work for injury prevention (hip stability, glutes, single-leg work). Should fit equipment constraint (Tier 0 only). Should acknowledge the 6-day schedule with 2 short days. At the end should generate CSV export of the plan structure.",
+      "files": []
+    }
+  ]
+}
