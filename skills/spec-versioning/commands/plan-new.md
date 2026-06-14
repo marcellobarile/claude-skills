@@ -1,6 +1,6 @@
 ---
 allowed-tools: Bash(date:*), Bash(mkdir:*), Read, Write
-description: Scaffold a dated implementation plan into docs/plans (or $PLAN_DIR)
+description: Scaffold a dated implementation plan into docs/plans (default) or docs/superpowers/plans (--superpowers)
 ---
 
 ## Context
@@ -12,10 +12,12 @@ Today (ISO date):
 
 ## Your task
 
-1. Treat `$ARGUMENTS` as the feature name. Kebab-case it for the filename.
-2. Target directory: `docs/plans` unless the repo already uses `docs/superpowers/plans` — if so,
-   use that.
-3. Create the directory if missing.
-4. Copy `~/.claude/skills/spec-versioning/templates/plan-template.md` into
+1. Check if `$ARGUMENTS` contains `--superpowers`. If yes, remove the flag from the feature string.
+2. Treat the remaining arguments as the feature name. Kebab-case it for the filename.
+3. Target directory:
+   - `--superpowers` flag present → `docs/superpowers/plans`
+   - otherwise → `docs/plans`
+4. Create the directory if missing.
+5. Copy `~/.claude/skills/spec-versioning/templates/plan-template.md` into
    `<dir>/<date>-<feature-kebab>.md`, replacing `<feature>` placeholders.
-5. Tell the user the path. Do not commit.
+6. Tell the user the path. Do not commit.

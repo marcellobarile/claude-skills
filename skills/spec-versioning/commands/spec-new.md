@@ -1,6 +1,6 @@
 ---
 allowed-tools: Bash(date:*), Bash(mkdir:*), Read, Write
-description: Scaffold a dated design spec into docs/specs (or $SPEC_DIR)
+description: Scaffold a dated design spec into docs/specs (default) or docs/superpowers/specs (--superpowers)
 ---
 
 ## Context
@@ -12,10 +12,12 @@ Today (ISO date):
 
 ## Your task
 
-1. Treat `$ARGUMENTS` as the topic. Kebab-case it for the filename.
-2. Target directory: `docs/specs` unless the repo already uses `docs/superpowers/specs`
-   (check with the Read/Glob tools) — if so, use that.
-3. Create the directory if missing.
-4. Copy `~/.claude/skills/spec-versioning/templates/spec-template.md` into
+1. Check if `$ARGUMENTS` contains `--superpowers`. If yes, remove the flag from the topic string.
+2. Treat the remaining arguments as the topic. Kebab-case it for the filename.
+3. Target directory:
+   - `--superpowers` flag present → `docs/superpowers/specs`
+   - otherwise → `docs/specs`
+4. Create the directory if missing.
+5. Copy `~/.claude/skills/spec-versioning/templates/spec-template.md` into
    `<dir>/<date>-<topic-kebab>-design.md`, replacing `<topic>` and `<owner>` placeholders.
-5. Tell the user the path. Do not commit.
+6. Tell the user the path. Do not commit.

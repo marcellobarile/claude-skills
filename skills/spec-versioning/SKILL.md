@@ -7,23 +7,34 @@ description: Convention for where design specs and implementation plans live in 
 
 Keep design specs and implementation plans as versioned, repo-scoped Markdown.
 
-## Convention
+## Layouts
 
-- Specs → `<repo>/docs/specs/YYYY-MM-DD-<topic>-design.md`
-- Plans → `<repo>/docs/plans/YYYY-MM-DD-<feature>.md`
+Two supported layouts — both are first-class, not fallbacks for each other:
+
+| Layout | Specs | Plans |
+|---|---|---|
+| **default** | `docs/specs/YYYY-MM-DD-<topic>-design.md` | `docs/plans/YYYY-MM-DD-<feature>.md` |
+| **superpowers** | `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` | `docs/superpowers/plans/YYYY-MM-DD-<feature>.md` |
 
 These are repo-scoped on purpose: they version with the code and travel in PRs.
 
-### Opt-in: superpowers layout
-
-If you use the superpowers plugin, set the path prefix to `docs/superpowers/` so specs land in
-`docs/superpowers/specs/` and plans in `docs/superpowers/plans/`. The `/spec-new` and `/plan-new`
-commands read an optional `SPEC_DIR` / `PLAN_DIR` override; default is the neutral layout above.
-
 ## Commands
 
-- `/spec-new <topic>` — scaffold a dated spec from `templates/spec-template.md`.
-- `/plan-new <feature>` — scaffold a dated plan from `templates/plan-template.md`.
+- `/spec-new <topic>` — scaffold a dated spec (default layout).
+- `/spec-new --superpowers <topic>` — scaffold into `docs/superpowers/specs/`.
+- `/plan-new <feature>` — scaffold a dated plan (default layout).
+- `/plan-new --superpowers <feature>` — scaffold into `docs/superpowers/plans/`.
+
+## Reading specs and plans
+
+When searching for an existing spec or plan, always check **both** locations:
+
+1. `docs/specs/` and `docs/plans/`
+2. `docs/superpowers/specs/` and `docs/superpowers/plans/`
+
+A repo may use different layouts for different artifacts (e.g. plans written by
+`superpowers:writing-plans` land in `docs/superpowers/plans/`, while hand-authored specs may live
+in `docs/specs/`). Never assume a single root.
 
 ## Writing quality
 
