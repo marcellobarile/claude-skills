@@ -52,29 +52,34 @@ user's message if invoked by description-match instead of the slash command.
 1. Missing entirely → ask the user for a PR number or URL.
 2. Full URL (`https://github.com/<owner>/<repo>/pull/<N>`) → extract `owner`, `repo`,
    `N` from it.
-3. Bare number → `N` is that number; resolve `owner/repo` from the current checkout:
+3. Bare number → `N` is that number; resolve `owner/repo` from the current checkout
+   (this call takes no user-supplied input, safe to run before validation):
    ```bash
    gh repo view --json nameWithOwner -q .nameWithOwner
    ```
-4. If the resolved `owner/repo` does not match the current repo's checkout, refuse —
+4. **Validate before interpolating `N`/`owner`/`repo` into any other command.** They are
+   external input, substituted textually into `git`/`gh` command strings throughout this
+   procedure — validate immediately after extraction (step 2/3), before anything else in
+   this section runs a command that uses them:
+   - `N` must match `^[0-9]+$` (a bare positive integer).
+   - `owner` and `repo` (from a URL) must each match `^[A-Za-z0-9._-]+$`.
+   - On failure: stop with an explicit error. Do not run any git/gh command with the
+     unvalidated value.
+5. If the resolved `owner/repo` does not match the current repo's checkout, refuse —
    do not clone another repo implicitly:
    ```
    This skill only reviews PRs of the current repo's checkout ("<origin-owner/repo>").
    Run it from a clone of <owner>/<repo> instead.
    ```
-5. Resolve the PR's actual head branch name (needed later to push back correctly — the
-   local worktree branch created in Step 2 is **not** the same ref):
+6. Only now, with `N` validated — resolve the PR's actual head branch name (needed later
+   to push back correctly — the local worktree branch created in Step 2 is **not** the
+   same ref):
    ```bash
    gh pr view <N> --json headRefName -q .headRefName
    ```
-   Store this as `HEAD_REF`.
-6. **Validate before interpolating into any command.** `N` and any `owner`/`repo`
-   extracted from a URL are external input, substituted textually into `git`/`gh`
-   command strings throughout this procedure — validate first, refuse otherwise:
-   - `N` must match `^[0-9]+$` (a bare positive integer).
-   - `owner` and `repo` (from a URL) must each match `^[A-Za-z0-9._-]+$`.
-   - On failure: stop with an explicit error. Do not run any git/gh command with the
-     unvalidated value.
+   Store this as `HEAD_REF` — but note (Step 3 below) that this value must be
+   substituted literally into later commands, not referenced as a persisted `$HEAD_REF`
+   shell variable.
 
 ## Step 2 — Isolated worktree
 
@@ -168,7 +173,7 @@ Findings reached zero.
 2. Propose the push (standard confirm-before-push — pushing is a shared-state,
    hard-to-reverse action; do not push without explicit user confirmation):
    ```bash
-   git -C "$WORKTREE_PATH" push origin "$REVIEW_BRANCH:$HEAD_REF"
+   git -C "$WORKTREE_PATH" push origin "$REVIEW_BRANCH:<HEAD_REF>"
    ```
 3. On confirmation, push. Then go to Step 6 (cleanup).
 
@@ -179,7 +184,7 @@ The user chose to stop with findings still open (or confirmed zero fixes at 3e).
 1. If there is anything to push, propose the push of whatever was fixed so far (same
    confirm-before-push gate):
    ```bash
-   git -C "$WORKTREE_PATH" push origin "$REVIEW_BRANCH:$HEAD_REF"
+   git -C "$WORKTREE_PATH" push origin "$REVIEW_BRANCH:<HEAD_REF>"
    ```
 2. On confirmation (or if there was nothing to push), mark the PR as draft, unless it
    already is one:
@@ -210,7 +215,7 @@ git -C "$REPO_ROOT" branch -D "$REVIEW_BRANCH"
 
 - Any Step 0 precondition failure → stop before any repo mutation. No cleanup needed
   (nothing was created yet).
-- PR belongs to a different repo than the current checkout (Step 1.4) → refuse, no
+- PR belongs to a different repo than the current checkout (Step 1.5) → refuse, no
   clone, no worktree created.
 - `copilot` exits non-zero during a reviewer step (3a) → show the captured
   `copilot-review-output.log` content, report the failure explicitly (never swallow it
