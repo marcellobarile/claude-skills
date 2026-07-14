@@ -1,0 +1,195 @@
+---
+name: copilot-adversarial-review
+description: Reviews a GitHub PR with the GitHub Copilot CLI (`copilot --allow-all-tools --prompt '/review'`) in an isolated git worktree, then iterates fixes locally with the user until findings converge, before a single push to the PR. Use when asked to run a Copilot review, an adversarial review, or a second-opinion review on a pull request, or when the user invokes /copilot-adversarial-review.
+---
+
+# copilot-adversarial-review
+
+Runs the GitHub Copilot CLI as an independent reviewer against a PR, with Claude acting
+only as *implementer* on Copilot's findings — never as a second, competing reviewer. The
+reviewer/implementer dialogue happens entirely in a disposable local worktree; the real
+PR only sees a single push at the end. This avoids a push → remote-comment → pull → fix
+→ push cycle.
+
+> **Output language.** Present findings, prompts, and summaries to the user in the
+> user's own language, per the user's preferences or the surrounding instructions. Keep
+> `copilot`/`gh`/`git` command output, file paths, and branch names unchanged.
+
+## Step 0 — Precondition checks
+
+Run every invocation (do not skip, do not assume from a prior session):
+
+```bash
+gh --version
+```
+Missing → stop: `Error: gh CLI not found. Install at https://cli.github.com`
+
+```bash
+gh auth status
+```
+Not authenticated → stop: `Error: not authenticated with GitHub. Run: gh auth login`
+
+```bash
+git --version
+```
+Missing → stop: `Error: git not found. Install git and retry.`
+
+```bash
+command -v copilot
+```
+Missing → stop:
+```
+Error: copilot CLI not found.
+Install: npm install -g @github/copilot   (requires Node.js 22+)
+Docs: https://docs.github.com/copilot/how-tos/set-up/install-copilot-cli
+```
+
+## Step 1 — Resolve the PR
+
+Input: `$ARGUMENTS` (PR number or full GitHub PR URL, from the slash command) or the
+user's message if invoked by description-match instead of the slash command.
+
+1. Missing entirely → ask the user for a PR number or URL.
+2. Full URL (`https://github.com/<owner>/<repo>/pull/<N>`) → extract `owner`, `repo`,
+   `N` from it.
+3. Bare number → `N` is that number; resolve `owner/repo` from the current checkout:
+   ```bash
+   gh repo view --json nameWithOwner -q .nameWithOwner
+   ```
+4. If the resolved `owner/repo` does not match the current repo's checkout, refuse —
+   do not clone another repo implicitly:
+   ```
+   This skill only reviews PRs of the current repo's checkout ("<origin-owner/repo>").
+   Run it from a clone of <owner>/<repo> instead.
+   ```
+5. Resolve the PR's actual head branch name (needed later to push back correctly — the
+   local worktree branch created in Step 2 is **not** the same ref):
+   ```bash
+   gh pr view <N> --json headRefName -q .headRefName
+   ```
+   Store this as `HEAD_REF`.
+
+## Step 2 — Isolated worktree
+
+Never touch the user's current branch or uncommitted work.
+
+```bash
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+REPO_NAME="$(basename "$REPO_ROOT")"
+WORKTREE_PATH="$(dirname "$REPO_ROOT")/${REPO_NAME}-copilot-review-pr-<N>"
+REVIEW_BRANCH="copilot-review/pr-<N>"
+```
+
+**Stale state check first** (a crashed prior run may have left residue):
+```bash
+git worktree list | grep -F "$WORKTREE_PATH" && git worktree remove "$WORKTREE_PATH" --force
+git show-ref --verify --quiet "refs/heads/$REVIEW_BRANCH" && git branch -D "$REVIEW_BRANCH"
+```
+(Both are safe no-ops if nothing is found — `&&` short-circuits when the check fails.)
+
+**Create the worktree:**
+```bash
+git fetch origin "pull/<N>/head:$REVIEW_BRANCH"
+git worktree add "$WORKTREE_PATH" "$REVIEW_BRANCH"
+```
+
+All remaining steps run with `$WORKTREE_PATH` as the working directory.
+
+## Step 3 — Reviewer/implementer convergence loop
+
+Initialize `iteration = 0`.
+
+**3a. Reviewer step.** In `$WORKTREE_PATH`, launch via the Bash tool with
+`run_in_background: true` (do not poll or sleep — you receive a completion
+notification):
+```bash
+copilot --allow-all-tools -s --prompt '/review' > copilot-review-output.log 2>&1
+```
+
+**3b. Read findings.** On completion, read `$WORKTREE_PATH/copilot-review-output.log`.
+Copilot's output is free text, not structured JSON — interpret it yourself to extract
+the list of actionable findings.
+
+**3c. Zero findings** → loop converged. Go to Step 4.
+
+**3d. Findings present** → present them to the user grouped by severity, each with your
+proposed fix (standard "flag everything, propose fix, wait for OK" — do not silently
+auto-apply anything beyond genuinely mechanical, unambiguous fixes). The user may
+confirm all, some, or none.
+
+**3e. Apply confirmed fixes** in `$WORKTREE_PATH`, then commit locally:
+```bash
+git -C "$WORKTREE_PATH" add -A
+git -C "$WORKTREE_PATH" commit -m "<describe what was fixed, in imperative mood, English>"
+```
+If the user confirmed none of the findings, do not commit — treat this as a stop signal
+and go to Step 5 (partial-push path; there may be zero fixes to push, which is fine —
+still report the unresolved findings).
+
+**3f. Increment `iteration`.**
+- **`iteration` is a multiple of 5** (5, 10, 15, ...) → soft-cap checkpoint. Pause, show
+  the user: fixes applied so far (commit count/summary), remaining findings, and the
+  iteration count. Ask explicitly (use `AskUserQuestion`): continue iterating, or stop
+  now.
+  - **Stop** → go to Step 5.
+  - **Continue** → go back to 3a. The next checkpoint fires at the following multiple
+    of 5 — there is no single hard ceiling, but the user is asked again every 5
+    iterations.
+- **Not a multiple of 5** → go back to 3a.
+
+## Step 4 — Push (converged path)
+
+Findings reached zero.
+
+1. Summarize what was fixed across all iterations.
+2. Propose the push (standard confirm-before-push — pushing is a shared-state,
+   hard-to-reverse action; do not push without explicit user confirmation):
+   ```bash
+   git -C "$WORKTREE_PATH" push origin "$REVIEW_BRANCH:$HEAD_REF"
+   ```
+3. On confirmation, push. Then go to Step 6 (cleanup).
+
+## Step 5 — Partial push + draft (soft-cap stop path)
+
+The user chose to stop with findings still open (or confirmed zero fixes at 3e).
+
+1. If there is anything to push, propose the push of whatever was fixed so far (same
+   confirm-before-push gate):
+   ```bash
+   git -C "$WORKTREE_PATH" push origin "$REVIEW_BRANCH:$HEAD_REF"
+   ```
+2. On confirmation (or if there was nothing to push), mark the PR as draft, unless it
+   already is one:
+   ```bash
+   gh pr view <N> --json isDraft -q .isDraft
+   ```
+   If `false`:
+   ```bash
+   gh pr ready <N> --undo
+   ```
+3. Report the remaining findings clearly (verbatim from the last `copilot-review-output.log`)
+   for the user's manual follow-up.
+4. Go to Step 6 (cleanup).
+
+## Step 6 — Cleanup
+
+Always, on every exit path (converged, soft-cap stop, or hard failure in Step 3a):
+
+```bash
+git worktree remove "$WORKTREE_PATH" --force
+git branch -D "$REVIEW_BRANCH"
+```
+
+## Error handling
+
+- Any Step 0 precondition failure → stop before any repo mutation. No cleanup needed
+  (nothing was created yet).
+- PR belongs to a different repo than the current checkout (Step 1.4) → refuse, no
+  clone, no worktree created.
+- `copilot` exits non-zero during a reviewer step (3a) → show the captured
+  `copilot-review-output.log` content, report the failure explicitly (never swallow it
+  silently). Do not attempt a push with an unknown/failed review state. Ask the user how
+  to proceed (retry the reviewer step, or abandon — abandoning still runs Step 6
+  cleanup).
+- The worktree construction (Step 2) never touches the user's current branch or
+  uncommitted work by design — there is nothing to stash or restore.
