@@ -18,7 +18,7 @@ pull → fix → push cycle by keeping the whole reviewer/implementer dialogue l
    until zero findings, checking in with you every 5 iterations.
 5. On convergence: a single confirmed push to the PR's branch.
 6. If you stop before convergence: pushes whatever was fixed, marks the PR as draft
-   (`gh pr ready --undo`), and reports the remaining findings for manual follow-up.
+   (`gh pr ready <N> --undo`), and reports the remaining findings for manual follow-up.
 7. Always cleans up the worktree.
 
 ---

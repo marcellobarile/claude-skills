@@ -1,5 +1,5 @@
 ---
-allowed-tools: Bash(gh:*), Bash(git:*), Bash(copilot:*), Bash(command:*), Bash(node:*), Read, Write, Edit, Grep, Glob
+allowed-tools: Bash(gh:*), Bash(git:*), Bash(copilot:*), Bash(command:*), Read, Write, Edit, Grep, Glob
 description: Adversarial-review a PR with the GitHub Copilot CLI, iterating fixes locally before a single push
 ---
 

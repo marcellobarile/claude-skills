@@ -68,15 +68,27 @@ user's message if invoked by description-match instead of the slash command.
    gh pr view <N> --json headRefName -q .headRefName
    ```
    Store this as `HEAD_REF`.
+6. **Validate before interpolating into any command.** `N` and any `owner`/`repo`
+   extracted from a URL are external input, substituted textually into `git`/`gh`
+   command strings throughout this procedure — validate first, refuse otherwise:
+   - `N` must match `^[0-9]+$` (a bare positive integer).
+   - `owner` and `repo` (from a URL) must each match `^[A-Za-z0-9._-]+$`.
+   - On failure: stop with an explicit error. Do not run any git/gh command with the
+     unvalidated value.
 
 ## Step 2 — Isolated worktree
 
 Never touch the user's current branch or uncommitted work. Also never `cd` the agent's
 shell into the worktree — the Bash tool's working directory persists across calls in
 this environment, so a bare `cd` would leave the agent's shell inside a directory that
-Step 6 later deletes. Instead, keep `REPO_ROOT` and address every worktree-targeted
-command with an explicit `-C "$WORKTREE_PATH"` (both `git` and `copilot` support this
-flag) — never ambient cwd.
+Step 6 later deletes. Address every worktree-targeted command with an explicit
+`-C "$WORKTREE_PATH"` (both `git` and `copilot` support this flag) — never ambient cwd.
+
+**Variable scope: each Bash tool call is a separate shell process.** Only the working
+directory persists between calls in this environment — environment variables do **not**.
+`REPO_ROOT`, `REPO_NAME`, `WORKTREE_PATH`, and `REVIEW_BRANCH` are deterministic
+functions of `N` and the repo root, so **recompute them at the top of every Bash call
+that references them** — do not rely on a value set in an earlier call:
 
 ```bash
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -85,17 +97,22 @@ WORKTREE_PATH="$(dirname "$REPO_ROOT")/${REPO_NAME}-copilot-review-pr-<N>"
 REVIEW_BRANCH="copilot-review/pr-<N>"
 ```
 
-**Stale state check first** (a crashed prior run may have left residue):
+`HEAD_REF` (resolved once via the API call in Step 1, not deterministic from `N` alone)
+has no such shortcut — substitute its already-resolved literal value directly into each
+later command that needs it, rather than referencing a variable from a different call.
+
+**Stale state check first** (a crashed prior run may have left residue). Anchored to
+`$REPO_ROOT` via `-C`, consistent with the no-ambient-cwd rule:
 ```bash
-git worktree list | grep -F "$WORKTREE_PATH" && git worktree remove "$WORKTREE_PATH" --force
-git show-ref --verify --quiet "refs/heads/$REVIEW_BRANCH" && git branch -D "$REVIEW_BRANCH"
+git -C "$REPO_ROOT" worktree list | grep -F "$WORKTREE_PATH" && git -C "$REPO_ROOT" worktree remove "$WORKTREE_PATH" --force
+git -C "$REPO_ROOT" show-ref --verify --quiet "refs/heads/$REVIEW_BRANCH" && git -C "$REPO_ROOT" branch -D "$REVIEW_BRANCH"
 ```
 (Both are safe no-ops if nothing is found — `&&` short-circuits when the check fails.)
 
 **Create the worktree:**
 ```bash
-git fetch origin "pull/<N>/head:$REVIEW_BRANCH"
-git worktree add "$WORKTREE_PATH" "$REVIEW_BRANCH"
+git -C "$REPO_ROOT" fetch origin "pull/<N>/head:$REVIEW_BRANCH"
+git -C "$REPO_ROOT" worktree add "$WORKTREE_PATH" "$REVIEW_BRANCH"
 ```
 
 All remaining steps target `$WORKTREE_PATH` via explicit `-C`, never by changing the
