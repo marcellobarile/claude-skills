@@ -1,6 +1,6 @@
 ---
 name: copilot-adversarial-review
-description: Reviews a GitHub PR with the GitHub Copilot CLI (`copilot --allow-all-tools --prompt '/review'`) in an isolated git worktree, then iterates fixes locally with the user until findings converge, before a single push to the PR. Use when asked to run a Copilot review, an adversarial review, or a second-opinion review on a pull request, or when the user invokes /copilot-adversarial-review.
+description: Reviews a GitHub PR with the GitHub Copilot CLI (`copilot --allow-all-tools -s --prompt '/review'`) in an isolated git worktree, then iterates fixes locally with the user until findings converge, before a single push to the PR. Use when asked to run a Copilot review, an adversarial review, or a second-opinion review on a pull request, or when the user invokes /copilot-adversarial-review.
 ---
 
 # copilot-adversarial-review
@@ -71,7 +71,12 @@ user's message if invoked by description-match instead of the slash command.
 
 ## Step 2 — Isolated worktree
 
-Never touch the user's current branch or uncommitted work.
+Never touch the user's current branch or uncommitted work. Also never `cd` the agent's
+shell into the worktree — the Bash tool's working directory persists across calls in
+this environment, so a bare `cd` would leave the agent's shell inside a directory that
+Step 6 later deletes. Instead, keep `REPO_ROOT` and address every worktree-targeted
+command with an explicit `-C "$WORKTREE_PATH"` (both `git` and `copilot` support this
+flag) — never ambient cwd.
 
 ```bash
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -93,17 +98,18 @@ git fetch origin "pull/<N>/head:$REVIEW_BRANCH"
 git worktree add "$WORKTREE_PATH" "$REVIEW_BRANCH"
 ```
 
-All remaining steps run with `$WORKTREE_PATH` as the working directory.
+All remaining steps target `$WORKTREE_PATH` via explicit `-C`, never by changing the
+agent's own working directory.
 
 ## Step 3 — Reviewer/implementer convergence loop
 
 Initialize `iteration = 0`.
 
-**3a. Reviewer step.** In `$WORKTREE_PATH`, launch via the Bash tool with
+**3a. Reviewer step.** Targeting `$WORKTREE_PATH` via `-C`, launch via the Bash tool with
 `run_in_background: true` (do not poll or sleep — you receive a completion
 notification):
 ```bash
-copilot --allow-all-tools -s --prompt '/review' > copilot-review-output.log 2>&1
+copilot -C "$WORKTREE_PATH" --allow-all-tools -s --prompt '/review' > "$WORKTREE_PATH/copilot-review-output.log" 2>&1
 ```
 
 **3b. Read findings.** On completion, read `$WORKTREE_PATH/copilot-review-output.log`.
@@ -173,11 +179,14 @@ The user chose to stop with findings still open (or confirmed zero fixes at 3e).
 
 ## Step 6 — Cleanup
 
-Always, on every exit path (converged, soft-cap stop, or hard failure in Step 3a):
+Always, on every exit path (converged, soft-cap stop, or hard failure in Step 3a). Both
+commands target `$REPO_ROOT` explicitly via `-C` — the agent's shell never `cd`'d into
+the worktree in the first place (Step 2), so there is no cwd to restore, but the
+commands themselves must not implicitly depend on the current directory either:
 
 ```bash
-git worktree remove "$WORKTREE_PATH" --force
-git branch -D "$REVIEW_BRANCH"
+git -C "$REPO_ROOT" worktree remove "$WORKTREE_PATH" --force
+git -C "$REPO_ROOT" branch -D "$REVIEW_BRANCH"
 ```
 
 ## Error handling
