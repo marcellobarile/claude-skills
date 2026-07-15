@@ -97,8 +97,8 @@ that references them** — do not rely on a value set in an earlier call:
 
 ```bash
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-REPO_NAME="$(basename "$REPO_ROOT")"
-WORKTREE_PATH="$(dirname "$REPO_ROOT")/${REPO_NAME}-copilot-review-pr-<N>"
+REPO_NAME="${REPO_ROOT##*/}"
+WORKTREE_PATH="${REPO_ROOT%/*}/${REPO_NAME}-copilot-review-pr-<N>"
 REVIEW_BRANCH="copilot-review/pr-<N>"
 ```
 
@@ -109,7 +109,7 @@ later command that needs it, rather than referencing a variable from a different
 **Stale state check first** (a crashed prior run may have left residue). Anchored to
 `$REPO_ROOT` via `-C`, consistent with the no-ambient-cwd rule:
 ```bash
-git -C "$REPO_ROOT" worktree list | grep -F "$WORKTREE_PATH" && git -C "$REPO_ROOT" worktree remove "$WORKTREE_PATH" --force
+[[ "$(git -C "$REPO_ROOT" worktree list)" == *"$WORKTREE_PATH"* ]] && git -C "$REPO_ROOT" worktree remove "$WORKTREE_PATH" --force
 git -C "$REPO_ROOT" show-ref --verify --quiet "refs/heads/$REVIEW_BRANCH" && git -C "$REPO_ROOT" branch -D "$REVIEW_BRANCH"
 ```
 (Both are safe no-ops if nothing is found — `&&` short-circuits when the check fails.)
