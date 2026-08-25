@@ -1,6 +1,0 @@
-{
-  "stop_prompt": true,
-  "min_turns": 5,
-  "min_files_edited": 3,
-  "keywords": ["choose", "decid", "approach", "alternativ", "trade-off"]
-}
